@@ -1,4 +1,4 @@
-h1. LitteChef
+h1. LittleChef
 
 With LittleChef you will be able to get started more quickly cooking with "Chef":http://www.opscode.com/chef, the excellent Configuration Management System.
 
@@ -55,7 +55,55 @@ h3. Setup
 
 @cook new_kitchen@ will create inside the current directory a few files and directories for LittleChef to be able to cook. You can create and have as many kitchens as you like on your computer.
 
-To be able to issue commands to remote nodes, you need to enter a user and a password with sudo rights. @new_kitchen@ will have created a file named @auth.cfg@. You can edit it now to enter a username and password or a keypair-file, or a reference to an ssh-config file.
+h3. Authorization
+
+To be able to issue commands to remote nodes, you need to be tell littlechef how to log in to them. All remote login is done via ssh, so the easiest way to do this is via standard ssh configuration. The recommended method of login is via ssh keys, but you can use ssh passwords if you're unable to set up ssh key configuration for any reason.
+
+If you can use ssh keys, then all your credentials should be put in a standard ssh configuration file. If you need to use passwords, then 
+
+h4. SSH key configuration
+
+On your local machine, create a file called @~/.ssh/config@ (if there isn't one already.) The format of this file is very simple (well, it can be complex - see @man ssh_config@, but you don't need to worry about all that for littlechef.)
+
+You need to edit that file to have stanzas like the following, one for each remote node you need to log into:
+
+bc. Host remote.host.name
+  User remote_user_name
+  IdentityFile /path/to/keyfile
+  Port 2222
+
+You can omit any values - User will default to your current username, IdentityFile to your default key file, and Port to 22.
+
+You can also use wildcards in hostnames if you have multiple similar nodes, all with the same credentials. For example:
+
+bc. Host *.us-west-1.compute.amazonaws.com
+  User ubuntu
+  IdentityFile ~/.ssh/us-west-1.pem
+
+You can also specify nicknames for hosts in order to reduce typing, or to get at numeric IP addresses without setting up DNS.
+
+bc. Host my.short.name
+  HostName a.really.really.long.hostname
+Host my.nickname
+  HostName 192.168.1.10
+  User ubuntu
+
+By default, littlechef will look for the ssh configuration file at @~/.ssh/config@ (the default location that ssh uses). To use an alternative configuration file, put an @auth.cfg@ file in your kitchen like this:
+
+bc. [userinfo]
+  ssh-config = /path/to/config/file
+
+h4. SSH password configuration
+
+You can't use ssh configuration files to store passwords. Instead, create an auth.cfg file in your kitchen like this:
+
+bc. [userinfo]
+  user = remote_user_name
+  password = remote_password
+
+and littlechef will use the specified user & password. You can only specify one username & password here; multiple accounts for different hosts are not possible.
+
+You can use both configuration methods. Littlechef will look first in @.ssh/config@, and if suitable credentials are not found there, it will fall back to @auth.cfg@.
 
 h3. Deploying
 
